@@ -152,41 +152,13 @@ tfe_pushconfig () (
         cd "$config_dir"
 
         if [ "$vcs" = true ]; then
-            # Current branch
-            git_branch="$(git rev-parse --abbrev-ref HEAD)"
-            echodebug "[DEBUG] Git branch is $git_branch"
-
-            # Absolute path to the root of the repo
-            git_base_dir="$(git rev-parse --show-toplevel)"
-            echodebug "[DEBUG] Git base dir is $git_base_dir"
-
-            # Path to the config dir relative to the base of the git repo.
-            # Config dir is either the current directory or was specified
-            # as an argument on the command line. So this may resolve to ""
-            # (no config dir specified, config dir is repo base dir) or
-            # something like /environment/prod (config dir was specified or
-            # current dir is not repo base dir but rather environment/prod).
-            git_rel_dir="${PWD#$git_base_dir}"
-
-            if [ -n "$git_rel_dir" ]; then
-                # The relative dir needs to have the preceding / removed
-                # and a / added to the end. This makes the git_rel_dir
-                # work in the later commands whether it was empty or not.
-                git_rel_dir="${git_rel_dir#/}"
-                git_rel_dir="$git_rel_dir/"
-            fi
-            echodebug "[DEBUG] Git relative dir is $git_rel_dir"
-
-            echodebug "[DEBUG] Entering dir $git_base_dir"
-            cd "$git_base_dir"
-
             # If there is a state file or modules we might want to upload them.
 
-            tf_state_file="${git_rel_dir}.terraform/terraform.tfstate"
+            tf_state_file=".terraform/terraform.tfstate"
             has_tf_state="$([ -f "$tf_state_file" ] && echo true || echo false)"
             echodebug "[DEBUG] Has $tf_state_file - $has_tf_state"
 
-            tf_modules_dir="${git_rel_dir}.terraform/modules"
+            tf_modules_dir=".terraform/modules"
             has_modules="$([ -d "$tf_modules_dir" ] && echo true || echo false)"
             echodebug "[DEBUG] Has $tf_modules_dir - $has_modules"
 
@@ -199,7 +171,7 @@ tfe_pushconfig () (
                 truetruetrue)
                     echodebug "[DEBUG] tar: state, modules, upload modules"
                     tar ${tfe_tar_verbose}zcfh "$config_payload" \
-                        $(git ls-tree -r "$git_branch" --name-only --full-tree) \
+                        $(git ls-files) \
                         "$tf_state_file" \
                         "$tf_modules_dir"
                     ;;
@@ -207,28 +179,28 @@ tfe_pushconfig () (
                 truetruefalse)
                     echodebug "[DEBUG] tar: state, modules, no upload modules"
                     tar ${tfe_tar_verbose}zcfh "$config_payload" \
-                        $(git ls-tree -r "$git_branch" --name-only --full-tree) \
+                        $(git ls-files) \
                         "$tf_state_file"
                     ;;
                 # has state, no modules, no modules so don't care about uploading
                 truefalse*)
                     echodebug "[DEBUG] tar: state, no modules"
                     tar ${tfe_tar_verbose}zcfh "$config_payload" \
-                        $(git ls-tree -r "$git_branch" --name-only --full-tree) \
+                        $(git ls-files) \
                         "$tf_state_file"
                     ;;
                 # no state, has modules, should upload modules
                 falsetruetrue)
                     echodebug "[DEBUG] tar: no state, modules, upload modules"
                     tar ${tfe_tar_verbose}zcfh "$config_payload" \
-                        $(git ls-tree -r "$git_branch" --name-only --full-tree) \
+                        $(git ls-files) \
                         "$tf_modules_dir"
                     ;;
                 # no state, no modules, no modules so don't care about uploading
                 falsefalse*)
                     echodebug "[DEBUG] tar: no state, no modules"
                     tar ${tfe_tar_verbose}zcfh "$config_payload" \
-                        $(git ls-tree -r "$git_branch" --name-only --full-tree)
+                        $(git ls-files)
                     ;;
             esac
         else
