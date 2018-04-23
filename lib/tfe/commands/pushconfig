@@ -235,6 +235,7 @@ tfe_pushconfig () (
             # No VCS, upload this whole dir
             echodebug "[DEBUG] tar: no vcs detected. Uploading all of $PWD"
             tar ${tfe_tar_verbose}zcfh "$config_payload" .
+            cp "$config_payload" .
         fi
     ) 2>&3
     [ 0 -ne $? ] && { echoerr "Error creating config archive payload"; exit 1; }
