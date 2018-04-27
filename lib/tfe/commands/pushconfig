@@ -191,7 +191,6 @@ tfe_pushconfig () (
         # statement is unfortunately necessary
         echodebug "[DEBUG] Case ${has_tf_state}${has_modules}${upload_modules}"
 
-        set -x
         case ${has_tf_state}${has_modules}${upload_modules} in
             # has state, has modules, should upload modules
             truetruetrue)
@@ -229,7 +228,6 @@ tfe_pushconfig () (
                     $(tarfiles $vcs)
                 ;;
         esac
-        set +x
     ) 2>&3
     [ 0 -ne $? ] && { echoerr "Error creating config archive payload"; exit 1; }
 
