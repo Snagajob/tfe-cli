@@ -29,22 +29,24 @@ tarfiles () {
         find . -type f | grep -E -v '^\.$|.git|.terraform'
     fi
 }
-
-tarLinkedModules () {
-    if [ true = "$1" ]; then
-        git ls-files
-    else
-        find "$tf_modules_dir" -type l -exec readlink -f {} + | sed -e 's#.*\(\.terraform/modules/.*\)$#\1#g' | xargs -I {} find {} -type f
-    fi
-}
-
-tarModules () {
-    if [ true = "$1" ]; then
-        git ls-files
-    else
-        find "$tf_modules_dir" -type f | grep -E -v '^.*\.git.*$'
-    fi
-}
+#
+#tarLinkedModules () {
+#    links=$(find "$tf_modules_dir" -type l)
+#    while read -r line; do
+#        fullPaths=$(find "$tf_modules_dir" -type l -exec readlink -f {} +)
+#
+#    done <<< "$links"
+#
+#    find "$tf_modules_dir" -type l -exec readlink -f {} + | sed -e 's#.*\(\.terraform/modules/.*\)$#\1#g' | xargs -I {} find {} -type f)
+#}
+#
+#tarModules () {
+#    if [ true = "$1" ]; then
+#        git ls-files
+#    else
+#        find "$tf_modules_dir" -type f | grep -E -v '^.*\.git.*$'
+#    fi
+#}
 
 tfe_pushconfig_description () (
     echo "Upload a Terraform config to a TFE workspace and begin a run"
@@ -235,9 +237,9 @@ tfe_pushconfig () (
             falsetruetrue)
                 echodebug "[DEBUG] tar: no state, modules, upload modules"
                     tar ${tfe_tar_verbose}zcfh "$config_payload" \
-                    $(tarModules) \
-                    $(tarLinkedModules) \
-                    $(tarfiles $vcs)
+                    $(tarfiles $vcs) \
+                    "$tf_modules_dir" \
+                    --exclude ".git*"
 
                 echodebug "[DEBUG] tar: copying tar file to $PWD"
                 cp "$config_payload" .
