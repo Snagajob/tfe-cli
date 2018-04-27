@@ -23,10 +23,8 @@
 # Archive the right files depending on whether a VCS is being used or not
 tarfiles () {
     if [ true = "$1" ]; then
-        echodebug "Found vcs true"
         git ls-files
     else
-        echo "Found vcs false..."
         find . -type f | grep -E -v '^\.$|.git|.terraform'
     fi
 }
@@ -226,7 +224,7 @@ tfe_pushconfig () (
 
                 echodebug "[DEBUG] tar: copying tar file to $PWD"
                 cp "$config_payload" .
-            echodebug "[DEBUG] tar: Uploading all of $PWD"
+                echodebug "[DEBUG] tar: Uploading all of $PWD"
                 ;;
             # no state, no modules, no modules so don't care about uploading
             falsefalse*)
