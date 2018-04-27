@@ -26,7 +26,15 @@ tarfiles () {
     if [ true = "$1" ]; then
         git ls-files
     else
-        find . -type f | grep -E -v '^\.$|.git|.terraform|.cli|.py|.md'
+        find . -type f | grep -E -v '^\.$|.git|.terraform|.cli|.py|.md|.sh'
+    fi
+}
+
+tarDesired () {
+    if [ true = "$1" ]; then
+        git ls-files
+    else
+        find . -type f | grep '^\.$|.json|.tf'
     fi
 }
 
@@ -237,9 +245,7 @@ tfe_pushconfig () (
             falsetruetrue)
                 echodebug "[DEBUG] tar: no state, modules, upload modules"
                     tar ${tfe_tar_verbose}zcfh "$config_payload" \
-                    $(tarfiles $vcs) \
-                    $(tarModules) \
-                    $(tarLinkedModules)
+                    $(tarDesired $vcs)
 
                 echodebug "[DEBUG] tar: copying tar file to $PWD"
                 cp "$config_payload" .
