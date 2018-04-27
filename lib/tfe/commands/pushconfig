@@ -30,11 +30,19 @@ tarfiles () {
     fi
 }
 
-tarModules () {
+tarLinkedModules () {
     if [ true = "$1" ]; then
         git ls-files
     else
         find "$tf_modules_dir" -type l -exec readlink -f {} + | sed -e 's#.*\(\.terraform/modules/.*\)$#\1#g' | xargs -I {} find {} -type f
+    fi
+}
+
+tarModules () {
+    if [ true = "$1" ]; then
+        git ls-files
+    else
+        find "$tf_modules_dir" -type f | grep -E -v '^.*\.git.*$'
     fi
 }
 
@@ -228,6 +236,7 @@ tfe_pushconfig () (
                 echodebug "[DEBUG] tar: no state, modules, upload modules"
                     tar ${tfe_tar_verbose}zcfh "$config_payload" \
                     $(tarModules) \
+                    $(tarLinkedModules) \
                     $(tarfiles $vcs)
 
                 echodebug "[DEBUG] tar: copying tar file to $PWD"
