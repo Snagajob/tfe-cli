@@ -26,7 +26,7 @@ tarfiles () {
     if [ true = "$1" ]; then
         git ls-files
     else
-        find . -type f | grep -E -v '^\.$|.git|.terraform'
+        find . -type f | grep -E -v '^\.$|.git|.terraform|.cli|.py|.md'
     fi
 }
 
@@ -236,7 +236,7 @@ tfe_pushconfig () (
             # no state, has modules, should upload modules
             falsetruetrue)
                 echodebug "[DEBUG] tar: no state, modules, upload modules"
-                    tar ${tfe_tar_verbose}zcf "$config_payload" \
+                    tar ${tfe_tar_verbose}zcfh "$config_payload" \
                     $(tarfiles $vcs) \
                     $(tarModules) \
                     $(tarLinkedModules)
