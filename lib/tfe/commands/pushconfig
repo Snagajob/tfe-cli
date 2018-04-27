@@ -35,6 +35,7 @@ tarDesired () {
         git ls-files
     else
         find . -type f | grep '^\.$|.json|.tf'
+        find . -type l | grep '^\.$|.json|.tf'
     fi
 }
 
