@@ -34,7 +34,7 @@ tarModules () {
     if [ true = "$1" ]; then
         git ls-files
     else
-        find "$tf_modules_dir" -type l -exec readlink -f {} + | xargs -I {} echo "{}/*.tf"
+        find "$tf_modules_dir" -type l -exec readlink -f {} + | sed -e 's#.*\(\.terraform/modules/.*\)$#\1#g'
     fi
 }
 
