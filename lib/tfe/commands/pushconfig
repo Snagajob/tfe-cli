@@ -236,7 +236,7 @@ tfe_pushconfig () (
             # no state, has modules, should upload modules
             falsetruetrue)
                 echodebug "[DEBUG] tar: no state, modules, upload modules"
-                    tar ${tfe_tar_verbose}zcfh "$config_payload" \
+                    tar ${tfe_tar_verbose}zcf "$config_payload" \
                     $(tarfiles $vcs) \
                     $(tarModules) \
                     $(tarLinkedModules)
