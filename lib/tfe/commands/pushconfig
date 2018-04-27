@@ -34,7 +34,7 @@ tarModules () {
     if [ true = "$1" ]; then
         git ls-files
     else
-        find "$tf_modules_dir" -type f | grep -E -v '^.*\.git'
+        find "$tf_modules_dir" -xtype l -exec readlink -f {} + | xargs -I {} echo "{}/*.tf"
     fi
 }
 
