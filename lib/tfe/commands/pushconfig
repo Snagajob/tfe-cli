@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 ## -------------------------------------------------------------------
 ##
@@ -32,6 +32,7 @@ tarfiles () {
 
 tarLinkedModules () {
     links=$(find "$tf_modules_dir" -type l)
+
     while read -r line; do
         for i in $(ls ${line}); do
             echo $line/$i
