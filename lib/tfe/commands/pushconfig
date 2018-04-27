@@ -228,7 +228,7 @@ tfe_pushconfig () (
                 echodebug "[DEBUG] tar: no state, modules, upload modules"
                     tar ${tfe_tar_verbose}zcfh "$config_payload" \
                     $(tarfiles $vcs) \
-                    "$(tarModules)"
+                    $(tarModules)
 
                 echodebug "[DEBUG] tar: copying tar file to $PWD"
                 cp "$config_payload" .
