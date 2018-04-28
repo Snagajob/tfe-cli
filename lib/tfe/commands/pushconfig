@@ -30,15 +30,6 @@ tarfiles () {
     fi
 }
 
-tarDesired () {
-    if [ true = "$1" ]; then
-        git ls-files
-    else
-        find . -type f | grep -E '^\.$|.json|.tf'
-        find . -type l | grep -E '^\.$|.json|.tf'
-    fi
-}
-
 tarLinkedModules () {
     links=$(find "$tf_modules_dir" -type l)
 
@@ -246,7 +237,9 @@ tfe_pushconfig () (
             falsetruetrue)
                 echodebug "[DEBUG] tar: no state, modules, upload modules"
                     tar ${tfe_tar_verbose}zcfh "$config_payload" \
-                    $(tarDesired $vcs)
+                    $(tarDesired $vcs) \
+                    $(tarLinkedModules) \
+                    $(tarModules)
 
                 echodebug "[DEBUG] tar: copying tar file to $PWD"
                 cp "$config_payload" .
