@@ -20,13 +20,15 @@
 ##
 ## -------------------------------------------------------------------
 tf_modules_dir=".terraform/modules"
+tar_list="/tmp/tarList.txt"
 
+echo "" > "${tar_list}"
 # Archive the right files depending on whether a VCS is being used or not
 tarfiles () {
     if [ true = "$1" ]; then
-        git ls-files
+        git ls-files >> "${tar_list}"
     else
-        find . -type f | grep -E -v '^\.$|.git|.terraform|.sh'
+        find . -type f | grep -E -v '^\.$|.git|.terraform|.sh' >> "${tar_list}"
     fi
 }
 
@@ -35,16 +37,16 @@ tarLinkedModules () {
 
     while read -r line; do
         for i in $(ls ${line}); do
-            echo $line/$i
+            echo $line/$i >> "${tar_list}"
         done
     done <<< "$links"
 }
 
 tarModules () {
     if [ true = "$1" ]; then
-        git ls-files
+        git ls-files >> "${tar_list}"
     else
-        find "$tf_modules_dir" -type f | grep -E -v '^.*\.git.*$'
+        find "$tf_modules_dir" -type f | grep -E -v '^.*\.git.*$' >> "${tar_list}"
     fi
 }
 
@@ -236,10 +238,12 @@ tfe_pushconfig () (
             # no state, has modules, should upload modules
             falsetruetrue)
                 echodebug "[DEBUG] tar: no state, modules, upload modules"
-                    tar ${tfe_tar_verbose}zcfh "$config_payload" \
-                    $(tarfiles $vcs) \
-                    $(tarLinkedModules) \
+                    $(tarfiles $vcs)
+                    $(tarLinkedModules)
                     $(tarModules)
+                    tar ${tfe_tar_verbose}zcfh "$config_payload" \
+                    -T "${tar_list}"
+
 
                 echodebug "[DEBUG] tar: copying tar file to $PWD"
                 cp "$config_payload" .
