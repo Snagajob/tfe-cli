@@ -48,6 +48,14 @@ tarModules () {
     fi
 }
 
+tarModules () {
+    if [ true = "$1" ]; then
+        git ls-files
+    else
+        find "$tf_modules_dir" -type f | grep -E -v '^\.$|.git|.terraform'
+    fi
+}
+
 tfe_pushconfig_description () (
     echo "Upload a Terraform config to a TFE workspace and begin a run"
 )
@@ -238,7 +246,7 @@ tfe_pushconfig () (
                 echodebug "[DEBUG] tar: no state, modules, upload modules"
                     tar ${tfe_tar_verbose}zcfh "$config_payload" \
                     $(tarfiles $vcs) \
-                    $(tarLinkedModules) \
+git                     $(tarLinkedModules) \
                     $(tarModules)
 
                 echodebug "[DEBUG] tar: copying tar file to $PWD"
