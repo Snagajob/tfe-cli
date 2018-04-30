@@ -29,10 +29,6 @@ tarfiles () {
     fi
 
     if [ true = "$2" ]; then
-        echo ".terraform/terraform.tfstate"
-    fi
-
-    if [ true = "$3" ]; then
         find -L .terraform/modules -type f |  grep -E -v '^\.$|\.git'
     fi
 }
@@ -183,17 +179,11 @@ tfe_pushconfig () (
             echodebug "[DEBUG] excluding VCS files and any plugins"
         fi
 
-        # If there is a state file or modules we might want to upload them.
+        # If there are modules we might want to upload them.
+        has_modules="$([ -d .terraform/modules ] && echo true || echo false)"
+        echodebug "[DEBUG] Has .terraform/modules: $has_modules"
 
-        tf_state_file=".terraform/terraform.tfstate"
-        has_tf_state="$([ -f "$tf_state_file" ] && echo true || echo false)"
-        echodebug "[DEBUG] Has $tf_state_file - $has_tf_state"
-
-        tf_modules_dir=".terraform/modules"
-        has_modules="$([ -d "$tf_modules_dir" ] && echo true || echo false)"
-        echodebug "[DEBUG] Has $tf_modules_dir - $has_modules"
-
-        tarfiles $vcs $has_tf_state $upload_modules > "$tarlist"
+        tarfiles $vcs $upload_modules > "$tarlist"
 
         tar ${tfe_tar_verbose}zcfh "$config_payload" -T "$tarlist"
 
