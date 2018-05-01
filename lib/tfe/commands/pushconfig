@@ -186,7 +186,7 @@ tfe_pushconfig () (
         tarfiles $vcs $upload_modules > "$tarlist"
 
         tar ${tfe_tar_verbose}zcfh \
-            "$config_payload" -T "$tarlist" --format posix
+            "$config_payload" -T "$tarlist" --format posix --hard-dereference
 
         echodebug "[DEBUG] tar: copying tar file to $PWD/$config_payload"
         cp "$config_payload" .
