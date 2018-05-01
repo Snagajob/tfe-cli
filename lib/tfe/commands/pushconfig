@@ -187,7 +187,7 @@ tfe_pushconfig () (
 
         echodebug "[DEBUG] Using hard-dereference"
         tar ${tfe_tar_verbose}zcfh \
-            "$config_payload" -T "$tarlist" --format posix --hard-dereference
+            "$config_payload" -T "$tarlist" --format posix
 
         echodebug "[DEBUG] tar: copying tar file to $PWD/$config_payload"
         cp "$config_payload" .
