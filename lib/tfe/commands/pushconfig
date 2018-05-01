@@ -185,6 +185,7 @@ tfe_pushconfig () (
 
         tarfiles $vcs $upload_modules > "$tarlist"
 
+        echodebug "[DEBUG] Using hard-dereference"
         tar ${tfe_tar_verbose}zcfh \
             "$config_payload" -T "$tarlist" --format posix --hard-dereference
 
