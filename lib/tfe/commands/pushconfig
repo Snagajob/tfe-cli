@@ -187,9 +187,6 @@ tfe_pushconfig () (
 
         tar ${tfe_tar_verbose}zcfh \
             "$config_payload" -T "$tarlist" --format posix
-
-        echodebug "[DEBUG] tar: copying tar file to $PWD/$config_payload"
-        cp "$config_payload" .
     ) 2>&3
     [ 0 -ne $? ] && { echoerr "Error creating config archive payload"; exit 1; }
 
