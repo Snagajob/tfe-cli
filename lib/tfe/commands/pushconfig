@@ -77,6 +77,16 @@ tfe_pushconfig () (
     config_dir=.
     poll_run=0
 
+    # Check for additional required commands. Note that tar is not
+    # standardized across platforms so only a minimum of carefully
+    # chosen options are used.
+    for required_cmd in git tar; do
+        if [ -z "$(command -v $required_cmd)" ]; then
+            echoerr "The $required_cmd command must be installed"
+            exit 1
+        fi
+    done
+
     # Parse options
 
     while [ -n "$1" ]; do
