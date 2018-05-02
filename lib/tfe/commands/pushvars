@@ -667,7 +667,7 @@ tfe_pushvars () (
                     in_var = 0
                     in_value = 0
                 }
-            }' "$(basename $var_file")")
+            }' "$(basename $var_file)")"
     fi
 
     echodebug "[DEBUG] All variables:"
