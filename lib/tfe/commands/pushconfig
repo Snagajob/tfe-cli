@@ -34,18 +34,18 @@ list_modules () {
 
 list_hardlinked () {
     find -L . -type f -links +1 | grep -E -v '^\.$|.git|.terraform' | cut -c 3-
-
-    if [ true = $1 ]; then
-        find -L .terraform/modules -type f -links +1 |  grep -E -v '^\.$|\.git'
-    fi
 }
 
 list_not_hardlinked () {
     find -L . -type f -links 1 | grep -E -v '^\.$|.git|.terraform' | cut -c 3-
+}
 
-    if [ true = $1 ]; then
-        find -L .terraform/modules -type f -links 1 |  grep -E -v '^\.$|\.git'
-    fi
+list_hardlinked_modules () {
+    find -L .terraform/modules -type f -links +1 |  grep -E -v '^\.$|\.git'
+}
+
+list_not_hardlinked_modules () {
+    find -L .terraform/modules -type f -links 1 |  grep -E -v '^\.$|\.git'
 }
 
 # Use GNU tar to archive the current directory
@@ -73,7 +73,7 @@ bsdtar () {
     vcslist="$TMPDIR/vcslist-$(date +%s)"
     hardlinklist="$TMPDIR/hardlinklist-$(date +%s)"
 
-    hardlinks="$(list_hardlinked false | sort)"
+    hardlinks="$(list_hardlinked | sort)"
     echo "$hardlinks" > "$hardlinklist"
 
     if [ true = $vcs ]; then
@@ -109,10 +109,15 @@ bsdtar () {
         else
             # Need all of the hardlinks, including ones that might be
             # in the modules dir if uploading modules
-            list_hardlinked $upload_modules > "$hardlinklist"
+            list_hardlinked > "$hardlinklist"
 
             # Need the non-hardlinks to tar
-            list_not_hardlinked $upload_modules > "$tarlist"
+            list_not_hardlinked > "$tarlist"
+        fi
+
+        if [ true = $upload_modules ]; then
+            list_hardlinked_modules >> "$hardlinklist"
+            list_not_hardlinked_modules >> "$tarlist"
         fi
 
         # Start by creating an uncompressed tar of the non-hardlinks
