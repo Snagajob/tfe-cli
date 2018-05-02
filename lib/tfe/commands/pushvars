@@ -287,7 +287,7 @@ tfe_pushvars () (
                         ;;
                     *)
                         echoerr "-dry-run should be true or false"
-                        exit 1
+                        return 1
                         ;;
                 esac
                 ;;
@@ -353,7 +353,7 @@ tfe_pushvars () (
                         ;;
                     *)
                         echoerr "-hide-sensitive should be true or false"
-                        exit 1
+                        return 1
                         ;;
                 esac
                 ;;
@@ -362,7 +362,7 @@ tfe_pushvars () (
                 # config directory
                 if [ $# -gt 1 ]; then
                     echoerr "Trailing options following config directory $1"
-                    exit 1
+                    return 1
                 fi
 
                 config_dir="$1"
@@ -376,7 +376,7 @@ tfe_pushvars () (
         if [ -z "$(command -v terraform)" ]; then
             echoerr "The terraform command must be installed when operating"
             echoerr "on tfvars files or Terraform configurations."
-            exit 1
+            return 1
         fi
     fi
 
@@ -389,7 +389,7 @@ tfe_pushvars () (
     var_get_resp="$(tfe_api_call $url)"
     if [ 0 -ne $? ]; then
         echoerr "Error listing variables"
-        exit 1
+        return 1
     fi
 
     echodebug "[DEBUG] Variable list response:"
@@ -402,7 +402,7 @@ tfe_pushvars () (
         if [ 0 -ne $? ]; then
             echoerr "Error entering the config directory:"
             echoerr "$config_dir"
-            exit 1
+            return 1
         fi
 
         # Get all of the variables from all of the .tf files
@@ -540,7 +540,7 @@ tfe_pushvars () (
         mkdir "$tfvar_dir"
         if [ 0 -ne $? ]; then
             echoerr "Error creating temporary directory for tfvars."
-            exit 1
+            return 1
         fi
 
         echodebug "[DEBUG] Temporary tfvars dir:"
@@ -549,13 +549,13 @@ tfe_pushvars () (
         cp "$var_file" "$tfvar_dir"
         if [ 0 -ne $? ]; then
             echoerr "Error copying variable file to temporary path."
-            exit 1
+            return 1
         fi
 
         cd "$tfvar_dir"
         if [ 0 -ne $? ]; then
             echoerr "Error entering variable file temporary path."
-            exit 1
+            return 1
         fi
 
         # This is not a great "parser" but it hopefully overreaches on finding

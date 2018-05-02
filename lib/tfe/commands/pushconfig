@@ -94,7 +94,7 @@ tfe_pushconfig () (
                         ;;
                     *)
                         echoerr "-upload-modules should be true or false"
-                        exit 1
+                        return 1
                         ;;
                 esac
                 ;;
@@ -108,7 +108,7 @@ tfe_pushconfig () (
                         ;;
                     *)
                         echoerr "-vcs should be true or false"
-                        exit 1
+                        return 1
                         ;;
                 esac
                 ;;
@@ -117,7 +117,7 @@ tfe_pushconfig () (
                     poll_run=$(assign_arg "$1" "$2")
                 else
                     echoerr "-poll must be an integer"
-                    exit 1
+                    return 1
                 fi
                 ;;
             *)
@@ -125,7 +125,7 @@ tfe_pushconfig () (
                 # config directory
                 if [ $# -gt 1 ]; then
                     echoerr "Trailing options following config directory $1"
-                    exit 1
+                    return 1
                 fi
 
                 config_dir=$1
@@ -151,7 +151,7 @@ tfe_pushconfig () (
         test -n "$workspace_id"
         echo "$workspace_id"
     ) 2>&3 )"
-    [ 0 -ne $? ] && { echoerr "Error obtaining workspace ID"; exit 1; }
+    [ 0 -ne $? ] && { echoerr "Error obtaining workspace ID"; return 1; }
 
     # Creates a tar.gz of the VCS or directory with the configuration
 
@@ -188,7 +188,7 @@ tfe_pushconfig () (
         tar ${tfe_tar_verbose}zcfh \
             "$config_payload" -T "$tarlist" --format posix
     ) 2>&3
-    [ 0 -ne $? ] && { echoerr "Error creating config archive payload"; exit 1; }
+    [ 0 -ne $? ] && { echoerr "Error creating config archive payload"; return 1; }
 
     echo "Uploading Terraform config..."
 
@@ -206,14 +206,14 @@ tfe_pushconfig () (
 
     upload_url_resp="$(tfe_api_call -d "$config_ver_payload" $url)"
     [ 0 -ne $? ] && { echoerr "Error creating config version"
-                      cleanup "$config_payload" "$tarlist"; exit 1; }
+                      cleanup "$config_payload" "$tarlist"; return 1; }
 
     echodebug "[DEBUG] Upload URL response:"
     echodebug "$upload_url_resp"
 
     config_id="$(printf "%s" "$upload_url_resp" | jq -r '.data.id')"
     [ 0 -ne $? ] && { echoerr "Error parsing API response for config ID"
-                      cleanup "$config_payload" "$tarlist"; exit 1; }
+                      cleanup "$config_payload" "$tarlist"; return 1; }
     echodebug "[DEBUG] Config ID: $config_id"
 
     # Perform the upload of the config archive to the upload URL
@@ -229,7 +229,7 @@ tfe_pushconfig () (
         echodebug "$upload_config_resp"
     ) 2>&3
     [ 0 -ne $? ] && { echoerr "Error uploading config archive"
-                     cleanup "$config_payload" "$tarlist"; exit 1; }
+                     cleanup "$config_payload" "$tarlist"; return 1; }
 
     cleanup "$config_payload" "$tarlist"
 
@@ -249,7 +249,7 @@ tfe_pushconfig () (
         test "$run_id"
         echo "$run_id"
     ) 2>&3 )"
-    [ 0 -ne $? ] && { echoerr "Error obtaining run ID"; exit 1; }
+    [ 0 -ne $? ] && { echoerr "Error obtaining run ID"; return 1; }
 
     echo "Run $run_id submitted with config $config_id on $tfe_org/$tfe_workspace"
 
@@ -297,10 +297,10 @@ tfe_pushconfig () (
                 lock_id="$(printf "%s" "$workspace_info_resp" | jq -r '.data.relationships."locked-by".data.id')"
                 if [ "$lock_id" != "$run_id" ]; then
                     echo "locked by $lock_id"
-                    exit
+                    return 0
                 fi
             fi
         done
     ) 2>&3
-    [ 0 -ne $? ] && { echoerr "Error polling run"; exit 1; }
+    [ 0 -ne $? ] && { echoerr "Error polling run"; return 1; }
 )

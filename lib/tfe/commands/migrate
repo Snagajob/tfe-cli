@@ -112,7 +112,7 @@ tfe_migrate () (
                 ;;
             *)
                 echoerr "Unknown option: $1"
-                exit 1
+                return 1
                 ;;
         esac
         [ -n "$1" ] && shift
@@ -122,13 +122,13 @@ tfe_migrate () (
     # Must have a legacy name
     if [ -z "$legacy_name" ]; then
         echoerr 'Legacy environment name is required.'
-        exit 1
+        return 1
     fi
 
     # Must have a VCS ID
     if [ -z "$vcs_id" ]; then
         echoerr 'VCS ID is required.'
-        exit 1
+        return 1
     fi
 
     # If no oauth id was given, then see if there is only one and use
