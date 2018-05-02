@@ -151,7 +151,11 @@ tfe_pushconfig () (
         test -n "$workspace_id"
         echo "$workspace_id"
     ) 2>&3 )"
-    [ 0 -ne $? ] && { echoerr "Error obtaining workspace ID"; return 1; }
+
+    if [ 0 -ne $? ]; then
+        echoerr "Error obtaining workspace ID"
+        return 1
+    fi
 
     # Creates a tar.gz of the VCS or directory with the configuration
 
@@ -159,7 +163,7 @@ tfe_pushconfig () (
     config_payload="$TMPDIR/content-$(date +%s).tar.gz"
     tarlist="$TMPDIR/tarlist-$(date +%s)"
 
-    (
+    if ! (
         set -e
 
         echodebug "[DEBUG] Entering dir $config_dir"
@@ -187,8 +191,10 @@ tfe_pushconfig () (
 
         tar ${tfe_tar_verbose}zcfh \
             "$config_payload" -T "$tarlist" --format posix
-    ) 2>&3
-    [ 0 -ne $? ] && { echoerr "Error creating config archive payload"; return 1; }
+    ) 2>&3; then
+        echoerr "Error creating config archive payload"
+        return 1
+    fi
 
     echo "Uploading Terraform config..."
 
@@ -205,19 +211,25 @@ tfe_pushconfig () (
     echodebug "[DEBUG] URL: $url"
 
     upload_url_resp="$(tfe_api_call -d "$config_ver_payload" $url)"
-    [ 0 -ne $? ] && { echoerr "Error creating config version"
-                      cleanup "$config_payload" "$tarlist"; return 1; }
+    if [ 0 -ne $? ]; then
+        echoerr "Error creating config version"
+        cleanup "$config_payload" "$tarlist"
+        return 1
+    fi
 
     echodebug "[DEBUG] Upload URL response:"
     echodebug "$upload_url_resp"
 
     config_id="$(printf "%s" "$upload_url_resp" | jq -r '.data.id')"
-    [ 0 -ne $? ] && { echoerr "Error parsing API response for config ID"
-                      cleanup "$config_payload" "$tarlist"; return 1; }
+    if [ 0 -ne $? ]
+        echoerr "Error parsing API response for config ID"
+        cleanup "$config_payload" "$tarlist"
+        return 1
+    fi
     echodebug "[DEBUG] Config ID: $config_id"
 
     # Perform the upload of the config archive to the upload URL
-    (
+    if ! (
         set -e
         url="$(printf "%s" "$upload_url_resp" | jq -r '.data.attributes."upload-url"')"
         echodebug "[DEBUG] Upload URL: $url"
@@ -227,9 +239,11 @@ tfe_pushconfig () (
 
         echodebug "[DEBUG] Upload config response:"
         echodebug "$upload_config_resp"
-    ) 2>&3
-    [ 0 -ne $? ] && { echoerr "Error uploading config archive"
-                     cleanup "$config_payload" "$tarlist"; return 1; }
+    ) 2>&3; then
+        echoerr "Error uploading config archive"
+        cleanup "$config_payload" "$tarlist"
+        return 1
+    fi
 
     cleanup "$config_payload" "$tarlist"
 
@@ -249,14 +263,18 @@ tfe_pushconfig () (
         test "$run_id"
         echo "$run_id"
     ) 2>&3 )"
-    [ 0 -ne $? ] && { echoerr "Error obtaining run ID"; return 1; }
+
+    if [ 0 -ne $? ]; then
+        echoerr "Error obtaining run ID"
+        return 1
+    fi
 
     echo "Run $run_id submitted with config $config_id on $tfe_org/$tfe_workspace"
 
     # Repeatedly poll the system every N seconds specified with -poll to get
     # the run status until it reaches a non-active status. By default -poll is
     # 0 and there is no polling.
-    (
+    if ! (
         set -e
         run_status=pending
         lock_id=
@@ -301,6 +319,8 @@ tfe_pushconfig () (
                 fi
             fi
         done
-    ) 2>&3
-    [ 0 -ne $? ] && { echoerr "Error polling run"; return 1; }
+    ) 2>&3; then
+        echoerr "Error polling run"
+        return 1
+    fi
 )

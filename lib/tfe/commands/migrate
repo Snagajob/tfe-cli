@@ -152,7 +152,11 @@ tfe_migrate () (
 
             echo "$oauth_ids"
         ) 2>&3 )"
-        [ 0 -ne $? ] && { echoerr "Error obtaining a default OAuth ID"; return 1; }
+
+        if [ 0 -ne $? ]; then
+            echoerr "Error obtaining a default OAuth ID"
+            return 1
+        fi
     fi
 
     make_migrate_payload "$tfe_workspace" "$legacy_name" "$vcs_id" "$oauth_id"
