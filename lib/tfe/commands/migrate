@@ -111,6 +111,9 @@ tfe_migrate () (
     vcs_id=
     oauth_id=
 
+    # Check for required standard options
+    check_required all
+
     # Parse options
 
     while [ -n "$1" ]; do

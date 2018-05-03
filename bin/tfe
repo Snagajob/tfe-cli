@@ -138,6 +138,122 @@ tf_version_required () {
     fi
 }
 
+check_required () {
+    if [ all = "$1" ]; then
+        check_for="tfe_org tfe_workspace tfe_token tfe_address"
+    else
+        check_for="$*"
+    fi
+
+    for i in $check_for; do
+        case "$i" in
+            tfe_org)
+                if [ -z "$tfe_org" ]; then
+                    missing=1
+                    echoerr 'TFE organization required.'
+                    echoerr 'Set with $TFE_ORG or use -name'
+                    echoerr
+                fi
+            ;;
+            tfe_workspace)
+                if [ -z "$tfe_org" ]; then
+                    missing=1
+                    echoerr 'TFE workspace required.'
+                    echoerr 'Set with $TFE_WORKSPACE or use -name'
+                    echoerr
+                fi
+            ;;
+            tfe_token)
+                if [ -z "$tfe_token" ]; then
+                    missing=1
+                    echoerr 'TFE API token required.'
+                    echoerr 'Set with $TFE_TOKEN, -token, or $ATLAS_TOKEN'
+                    echoerr
+                fi
+            ;;
+            tfe_address)
+                # This really shouldn't happen. Someone would have to
+                # explicitly pass in an empty string to the command line
+                # argument.
+                if [ -z "$tfe_address" ]; then
+                    missing=1
+                    echoerr 'TFE address required.'
+                    echoerr 'Set with -tfe-address or $TFE_URL'
+                    echoerr
+                fi
+            ;;
+        esac
+    done
+    if [ 1 -eq $missing ]; then
+        exit 1
+    fi
+}
+
+
+execute_subcmd () {
+    # Get the directory where the command should exist
+    cmd_dir="$1"
+    [ -n "$1" ] && shift
+
+    if [ -z "$cmd_dir" ]; then
+        echoerr "Error locating command."
+        exit 1
+    fi
+
+    echodebug "[DEBUG] Command dir: $cmd_dir"
+
+    # Get the command to find and run
+    cmd="$1"
+    [ -n "$1" ] && shift
+
+    echodebug "[DEBUG] Command: $cmd"
+
+    if [ -z "$cmd" ]; then
+        tfe_help
+        exit 1
+    fi
+
+    # At least one argument given. If is help, run help with any arguments supplied.
+    # Exit with help's return value.
+    if [ "help" = $cmd ]; then
+        tfe_help $@
+        exit $?
+    fi
+
+    # Make sure there's a commands directory
+    if [ ! -d "$cmd_dir" ]; then
+        echoerr "Error obtaining commands. Check:"
+        echoerr "$cmd_dir"
+        exit 1
+    fi
+
+    # Ensure the command exists
+    if [ ! -f "$cmd_dir/$cmd" ]; then
+        echoerr "Command '$cmd' not found. See 'tfe help' for usage."
+        exit 1
+    fi
+
+    # Handle a special case of help dyslexia, e.g.:
+    #   tfe pushconfig help
+    if [ 1 -eq $# ] && [ "help" = "$1" ]; then
+        echodebug "[DEBUG] Help swapped in argument list"
+
+        # See if the cmd is actually a command that the user probably
+        # wants help information for.
+        if [ -f "$cmd_dir/$1" ]; then
+            . "$cmd_dir/$cmd"
+            tfe_${cmd}_help
+            exit 0
+        fi
+    fi
+
+    # Dispatch the command with all of the following arguments to the appropriate,
+    # sourced function
+    echodebug "[DEBUG] Loading command from $cmd_dir/$cmd"
+    . "$cmd_dir/$cmd"
+    tfe_$cmd $@
+}
+
 ##
 ## Program begins here
 ##
@@ -212,7 +328,7 @@ while [ -h "$target" ]; do
     else
         # link path is relative, need to relatively follow it
         target="${target%/*}"
-        target="${target}/${link}"
+        target="$target/$link"
     fi
 done
 
@@ -233,66 +349,37 @@ tfe_prefix=${tfe_prefix%/sbin}
 # /path/to/gitclone/terraform-enterprise-push
 
 # Set some additional convenience variables
-tfe_cmd_dir="${tfe_prefix}/lib/tfe/commands"
-tfe_payload_dir="${tfe_prefix}/share/tfe/commands"
+tfe_cmd_dir="$tfe_prefix/lib/tfe/commands"
+tfe_payload_dir="$tfe_prefix/share/tfe/commands"
 
 # Make sure there's a commands directory
-if [ ! -d "${tfe_cmd_dir}" ]; then
+if [ ! -d "$tfe_cmd_dir" ]; then
     echoerr "Error obtaining commands. Check:"
-    echoerr "${tfe_cmd_dir}"
+    echoerr "$tfe_cmd_dir"
     exit 1
 fi
 
-# The help command is handled as a special case to cope with incorrect
-# invocations.
-
-# Make sure we can load help. If not, that's a red flag.
-if [ -f "${tfe_cmd_dir}/help" ] ; then
-    . "${tfe_cmd_dir}/help"
+# Make sure we can load help so it is alwasy available.
+# If not, that's a red flag.
+if [ -f "$tfe_cmd_dir/help" ] ; then
+    . "$tfe_cmd_dir/help"
 else
     error_msg "Could not load essential commands. Please check your paths."
     exit 1
 fi
 
-# No command was supplied. Try to error out helpfully.
-if [ 0 -eq $# ]; then
-    tfe_help
-    exit 1
-fi
-
-# At least one argument given. If is help, run help with any arguments supplied.
-# Exit with help's return value.
-if [ "help" = $1 ]; then
-    [ -n "$1" ] && shift
-    tfe_help $@
-    exit $?
-fi
+# These help invocations are handled as a special case
+case "$1" in
+    -h|--help|-help)
+        cmd_dir="$tfe_cmd_dir"
+        tfe_help
+        exit 0
+    ;;
+esac
 
 # Now, if we haven't exited:
 #   First argument is a command
 #   Additional arguments are parameters to the command to be run
-
-# Pop the command
-cmd="$1"
-[ -n "$1" ] && shift
-
-# Ensure the command exists
-if [ ! -f "$tfe_cmd_dir/$cmd" ]; then
-    echoerr "Command '$cmd' not found. See 'tfe help' for usage."
-    exit 1
-fi
-
-# Handle a special case of help dyslexia, e.g.:
-#   tfe pushconfig help
-if [ 1 -eq $# ] && [ "help" = "$1" ]; then
-    # See if the cmd is actually a command that the user probably
-    # wants help information for.
-    if [ -f "$tfe_cmd_dir/$1" ]; then
-        . "$tfe_cmd_dir/$cmd"
-        tfe_${cmd}_help
-        exit 0
-    fi
-fi
 
 # Comb through options for name, token, and address while building
 # a list of other arguments to go to the subcommand
@@ -323,46 +410,20 @@ while [ -n "$1" ]; do
     esac
 done
 
-# Check for required values
+# Try to assign required values
 
 # Did we get org and workspace from the environment?
 if [ -z "$tfe_org" ] && [ -z "$tfe_workspace" ]; then
     # No. Did we get it from -name?
-    if [ -z "$tfe_name" ]; then
-        # No.
-        echoerr 'Org and workspace required.'
-        echoerr 'Set with $TFE_ORG and $TFE_WORKSPACE or use -name'
-        exit 1
-    else
+    if [ -n "$tfe_name" ]; then
         # Separate the org and workspace in name
         tfe_org="${tfe_name%/*}"
         tfe_workspace="${tfe_name#*/}"
     fi
 fi
 
-# Org and workspace could still be possibly unset if they're malformed
-if [ -z "$tfe_org" ] || [ -z "$tfe_workspace" ]; then
-    echoerr 'Org and workspace required.'
-    echoerr 'Set with $TFE_ORG and $TFE_WORKSPACE or use -name'
-    exit 1
-fi
-
-if [ -z "$tfe_token" ]; then
-    echoerr 'Set the API token with $TFE_TOKEN, -token, or $ATLAS_TOKEN'
-    exit 1
-fi
-
-# This really shouldn't happen. Someone would have to explicitly pass in
-# an empty string to the command line argument.
-if [ -z "$tfe_address" ]; then
-    echoerr 'TFE address was not set'
-    exit 1
-fi
-
-# Dispatch the command with all of the following arguments to the appropriate,
-# sourced function
-. "$tfe_cmd_dir/$cmd"
-tfe_$cmd $subcmd_args
+# Run the subcommand with the remaining arguments
+execute_subcmd "$tfe_cmd_dir" $subcmd_args
 
 # Exit with the exit code returned by the command
 exit $?

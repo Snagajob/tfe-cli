@@ -202,6 +202,9 @@ tfe_pushconfig () (
         fi
     fi
 
+    # Check for required standard options
+    check_required all
+
     # Parse options
 
     while [ -n "$1" ]; do

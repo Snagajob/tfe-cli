@@ -73,6 +73,9 @@ tfe_pullvars () (
     # Whether to list all env vars instead of tf vars
     env=false
 
+    # Check for required standard options
+    check_required all
+
     # Parse options
 
     while [ -n "$1" ]; do
