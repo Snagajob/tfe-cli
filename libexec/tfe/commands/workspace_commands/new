@@ -20,18 +20,18 @@
 ##
 ## -------------------------------------------------------------------
 
-tfe_create_description () (
-    echo "Create a Terraform Enterprise workspace"
+tfe_new_description () (
+    echo "Create a new Terraform Enterprise workspace"
 )
 
-tfe_create_help () (
+tfe_new_help () (
 # Be sure to include the common options with tfe_usage_args
 cat << EOF
 SYNOPSIS
- tfe workspace create -name <ORGANIZATION>/<WORKSPACE> [OPTIONS]
+ tfe workspace new -name <ORGANIZATION>/<WORKSPACE> [OPTIONS]
 
 DESCRIPTION
- Create a Terraform Enterprise workspace.
+ Create a new Terraform Enterprise workspace.
 
 OPTIONS
 $(tfe_usage_args)
@@ -82,7 +82,7 @@ EOF
 ## Helper functions
 ##
 
-make_create_payload () {
+make_new_workspace_payload () {
 
 # $1 new workspace name
 # $2 auto-apply
@@ -138,7 +138,7 @@ cat $payload >3
 
 }
 
-tfe_create () (
+tfe_new () (
     payload="$TMPDIR/tfe-migrate-payload-$(date +%s)"
     auto_apply=false
     tf_version=
@@ -232,9 +232,9 @@ tfe_create () (
     # $6 VCS branch
     # $7 vcs submodules
     # $8 VCS repo ID (e.g. "github_org/github_repo")
-    make_create_payload "$tfe_workspace" "$auto_apply" "$tf_version" \
-                        "$working_dir" "$oauth_id" "$vcs_branch" \
-                        "$vcs_submodules" "$vcs_id"
+    make_new_workspace_payload "$tfe_workspace" "$auto_apply" "$tf_version" \
+                               "$working_dir" "$oauth_id" "$vcs_branch" \
+                               "$vcs_submodules" "$vcs_id"
     if [ 0 -ne $? ]; then
         echoerr "Error generating payload file for migration"
         return 1
@@ -244,11 +244,11 @@ tfe_create () (
     echodebug "$(cat $payload)"
 
     url="$tfe_address/api/v2/organizations/$tfe_org/workspaces"
-    create_resp="$(tfe_api_call -d @"$payload" "$url")"
+    new_resp="$(tfe_api_call -d @"$payload" "$url")"
     err=$?
 
-    echodebug "[DEBUG] Workspace create response:"
-    echodebug "$create_resp"
+    echodebug "[DEBUG] New workspace response:"
+    echodebug "$new_resp"
 
     if [ 0 -ne $err ]; then
         echoerr "Error creating workspace $tfe_org/$tfe_workspace"
@@ -257,5 +257,5 @@ tfe_create () (
 
     cleanup "$payload"
 
-    echo "Created workspace $tfe_org/$tfe_workspace"
+    echo "Created new workspace $tfe_org/$tfe_workspace"
 )
