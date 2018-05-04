@@ -213,8 +213,22 @@ execute_subcmd () {
         exit 1
     fi
 
-    # At least one argument given. If is help, run help with any arguments supplied.
-    # Exit with help's return value.
+    # Look for -h and friends, which are not actually advertised options, in
+    # order to be helpful
+    for arg in $@; do
+        case "$arg" in
+            -h|--help|-help)
+                tfe_help "$cmd"
+                exit 0
+            ;;
+        esac
+    done
+
+    # This allows for the help order to be reversed. So
+    #     tfe help pushconfig
+    # and
+    #     tfe pushconfig help
+    # will give you the same thing
     if [ "help" = $cmd ]; then
         tfe_help $@
         exit $?

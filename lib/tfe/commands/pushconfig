@@ -209,9 +209,6 @@ tfe_pushconfig () (
 
     while [ -n "$1" ]; do
         case "$1" in
-            help|-h|-help|--help)
-                usage
-                ;;
             -upload-modules)
                 case "$2" in
                     true)

@@ -80,10 +80,6 @@ tfe_pullvars () (
 
     while [ -n "$1" ]; do
         case "$1" in
-            help|-h|-help|--help)
-                tfe_pullvars_help
-                return 1
-                ;;
             -var)
                 # -var can be specified multiple times
                 new_var="$(assign_arg "$1" "$2")"
