@@ -143,6 +143,7 @@ check_required () {
     fi
 
     for i in $check_for; do
+        missing=0
         case "$i" in
             tfe_org)
                 if [ -z "$tfe_org" ]; then
