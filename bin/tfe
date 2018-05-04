@@ -28,8 +28,10 @@
 # bets are off for any other variables used in this script before subcommands
 # are executed.
 #
+# tfe_prefix
+# tfe_lib_dir
+# tfe_libexec_dir
 # tfe_cmd_dir
-# tfe_payload_dir
 # tfe_tar_verbose
 # tfe_curl_silent
 # tfe_address
@@ -41,12 +43,7 @@
 ## Utility function declarations
 ##
 
-# Print messages to stderr. Use printf to ensure the message is verbatim.
-# E.g. do not interpret \n in JSON.
-echoerr () { printf "%s\n" "$@" 1>&2; }
 
-# Print debug messages if the TF_LOG environment variable is set.
-echodebug () { [ -n "$TF_LOG" ] && echoerr "$@"; return 0; }
 
 # Return (print) $1\n$2 if $1 is not empty. Usage:
 #   my_str_list="$(append "$my_str_list" "line")"
@@ -190,96 +187,15 @@ check_required () {
 }
 
 
-execute_subcmd () {
-    # Get the directory where the command should exist
-    cmd_dir="$1"
-    [ -n "$1" ] && shift
-
-    if [ -z "$cmd_dir" ]; then
-        echoerr "Error locating command."
-        exit 1
-    fi
-
-    echodebug "[DEBUG] Command dir: $cmd_dir"
-
-    # Get the command to find and run
-    cmd="$1"
-    [ -n "$1" ] && shift
-
-    echodebug "[DEBUG] Command: $cmd"
-
-    if [ -z "$cmd" ]; then
-        tfe_help
-        exit 1
-    fi
-
-    # Look for -h and friends, which are not actually advertised options, in
-    # order to be helpful
-    for arg in $@; do
-        case "$arg" in
-            -h|--help|-help)
-                tfe_help "$cmd"
-                exit 0
-            ;;
-        esac
-    done
-
-    # This allows for the help order to be reversed. So
-    #     tfe help pushconfig
-    # and
-    #     tfe pushconfig help
-    # will give you the same thing
-    if [ "help" = $cmd ]; then
-        tfe_help $@
-        exit $?
-    fi
-
-    # Make sure there's a commands directory
-    if [ ! -d "$cmd_dir" ]; then
-        echoerr "Error obtaining commands. Check:"
-        echoerr "$cmd_dir"
-        exit 1
-    fi
-
-    # Ensure the command exists
-    if [ ! -f "$cmd_dir/$cmd" ]; then
-        echoerr "Command '$cmd' not found. See 'tfe help' for usage."
-        exit 1
-    fi
-
-    # Handle a special case of help dyslexia, e.g.:
-    #   tfe pushconfig help
-    if [ 1 -eq $# ] && [ "help" = "$1" ]; then
-        echodebug "[DEBUG] Help swapped in argument list"
-
-        # See if the cmd is actually a command that the user probably
-        # wants help information for.
-        if [ -f "$cmd_dir/$1" ]; then
-            . "$cmd_dir/$cmd"
-            tfe_${cmd}_help
-            exit 0
-        fi
-    fi
-
-    # Dispatch the command with all of the following arguments to the appropriate,
-    # sourced function
-    echodebug "[DEBUG] Loading command from $cmd_dir/$cmd"
-    . "$cmd_dir/$cmd"
-    tfe_$cmd $@
-}
-
 ##
 ## Program begins here
 ##
-
-echodebug "[DEBUG] $PWD"
-echodebug "[DEBUG] $0 $*"
 
 # Check for commands that must be present to function
 
 for required_cmd in jq curl readlink; do
     if [ -z "$(command -v $required_cmd)" ]; then
-        echoerr "The $required_cmd command must be installed"
+        echo "The $required_cmd command must be installed" 1>&2
         exit 1
     fi
 done
@@ -292,38 +208,10 @@ fi
 # Strip the trailing / from TMPDIR if there is one
 TMPDIR="$(echo "$TMPDIR" | sed 's#/$##')"
 
-if [ -n "$TF_LOG" ]; then
-    # Debugging. Print command errors and make them verbose
-    tfe_tar_verbose=v
-    tfe_curl_silent=
-    exec 3>&2
-else
-    # Not debugging. Shut everyting up.
-    tfe_tar_verbose=
-    tfe_curl_silent="-s"
-    exec 3>/dev/null
-fi
-
-# Allow setting the URL to TFE with TFE_URL
-tfe_address=${TFE_URL:-"https://app.terraform.io"}
-
-# Allow setting the TFE organization with TFE_ORG
-tfe_org="$TFE_ORG"
-
-# Allow setting the TFE workspace with TFE_WORKSPACE
-tfe_workspace="$TFE_WORKSPACE"
-
-# Prefer TFE_TOKEN, fall back to ATLAS_TOKEN.
-# Keep going if it's not set - can be set by -token
-tfe_token="$TFE_TOKEN"
-if [ -z "$tfe_token" ]; then
-    tfe_token="$ATLAS_TOKEN"
-fi
-
 # Need to determine the script location and prefix to the needed lib directory.
 # The prefix should be the directory that contains the bin and lib directories.
-# i.e. /users/username/gitclones/terraform-enterprise-push (contains lib/tfe/)
-#      /usr (contains bin/tfe and lib/tfe/)
+# i.e. /users/username/gitclones/tfe-cli (contains lib/tfe/)
+# or   /usr (contains bin/tfe and lib/tfe/)
 
 # Note that this is not POSIX but portable to many systems with nearly any
 # kind of implementation of readlink. We already require jq and curl, so
@@ -360,36 +248,77 @@ tfe_prefix=${tfe_prefix%/bin}
 tfe_prefix=${tfe_prefix%/sbin}
 
 # tfe_prefix should now be to something like /usr or
-# /path/to/gitclone/terraform-enterprise-push
+# /path/to/gitclone/tfe-cli
 
 # Set some additional convenience variables
-tfe_cmd_dir="$tfe_prefix/lib/tfe/commands"
+tfe_lib_dir="$tfe_prefix/lib/tfe"
+tfe_libexec_dir="$tfe_prefix/libexec/tfe"
+tfe_cmd_dir="$tfe_libexec_dir/commands"
 tfe_payload_dir="$tfe_prefix/share/tfe/commands"
+
+# Load required functions
+if [ ! -f "$tfe_lib_dir/echofuncs" ]; then
+    echo "Unable to load required functions from:" 1>&2
+    echo "$tfe_lib_dir/echofuncs" 1>&2
+fi
+
+# Provides echoerr and echodebug
+. "$tfe_lib_dir/echofuncs"
+
+if [ ! -f "$tfe_lib_dir/subcmd" ]; then
+    echoerr "Unable to load required functions from:"
+    echoerr "$tfe_lib_dir/subcmd"
+fi
+
+# Provides execute_subcmd
+. "$tfe_lib_dir/subcmd"
+
+if [ -n "$TF_LOG" ]; then
+    # Debugging. Print command errors and make them verbose
+    tfe_tar_verbose=v
+    tfe_curl_silent=
+    exec 3>&2
+else
+    # Not debugging. Shut everyting up.
+    tfe_tar_verbose=
+    tfe_curl_silent="-s"
+    exec 3>/dev/null
+fi
+
+# Allow setting the URL to TFE with TFE_URL
+tfe_address=${TFE_URL:-"https://app.terraform.io"}
+
+# Allow setting the TFE organization with TFE_ORG
+tfe_org="$TFE_ORG"
+
+# Allow setting the TFE workspace with TFE_WORKSPACE
+tfe_workspace="$TFE_WORKSPACE"
+
+# Prefer TFE_TOKEN, fall back to ATLAS_TOKEN.
+tfe_token="$TFE_TOKEN"
+if [ -z "$tfe_token" ]; then
+    tfe_token="$ATLAS_TOKEN"
+fi
+
+echodebug "[DEBUG] $PWD"
+echodebug "[DEBUG] $0 $*"
 
 # Make sure there's a commands directory
 if [ ! -d "$tfe_cmd_dir" ]; then
-    echoerr "Error obtaining commands. Check:"
+    echoerr "Error obtaining commands from:"
     echoerr "$tfe_cmd_dir"
     exit 1
 fi
 
-# Make sure we can load help so it is alwasy available.
+# Make sure we can load help so it is always available.
 # If not, that's a red flag.
 if [ -f "$tfe_cmd_dir/help" ] ; then
     . "$tfe_cmd_dir/help"
 else
-    error_msg "Could not load essential commands. Please check your paths."
+    echoerr "Unable to load help command from:"
+    echoerr "$tfe_cmd_dir/help"
     exit 1
 fi
-
-# These help invocations are handled as a special case
-case "$1" in
-    -h|--help|-help)
-        cmd_dir="$tfe_cmd_dir"
-        tfe_help
-        exit 0
-    ;;
-esac
 
 # Now, if we haven't exited:
 #   First argument is a command
@@ -437,7 +366,7 @@ if [ -z "$tfe_org" ] && [ -z "$tfe_workspace" ]; then
 fi
 
 # Run the subcommand with the remaining arguments
-execute_subcmd "$tfe_cmd_dir" $subcmd_args
+execute_subcmd "$bin_name" "$tfe_cmd_dir" $subcmd_args
 
 # Exit with the exit code returned by the command
 exit $?
