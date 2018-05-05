@@ -148,6 +148,9 @@ tfe_new () (
     vcs_submodules=false
     oauth_id=
 
+    # Ensure all of tfe_org, etc, are set
+    check_required all
+
     # Parse options
 
     while [ -n "$1" ]; do
