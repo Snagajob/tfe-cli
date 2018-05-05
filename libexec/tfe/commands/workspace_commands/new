@@ -134,7 +134,7 @@ cat >> "$payload" <<EOF
 EOF
 
 echodebug "[DEBUG] Payload contents:"
-cat $payload >3
+cat $payload 1>&3
 
 }
 
