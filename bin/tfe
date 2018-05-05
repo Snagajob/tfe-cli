@@ -142,8 +142,8 @@ check_required () {
         check_for="$*"
     fi
 
+    missing=0
     for i in $check_for; do
-        missing=0
         case "$i" in
             tfe_org)
                 if [ -z "$tfe_org" ]; then
@@ -182,9 +182,7 @@ check_required () {
             ;;
         esac
     done
-    if [ 1 -eq $missing ]; then
-        exit 1
-    fi
+    return $missing
 }
 
 
