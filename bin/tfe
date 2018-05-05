@@ -357,7 +357,7 @@ done
 # Try to assign required values
 
 # Did we get org and workspace from the environment?
-if [ -z "$tfe_org" ] && [ -z "$tfe_workspace" ]; then
+if [ -z "$tfe_org" ] || [ -z "$tfe_workspace" ]; then
     # No. Did we get it from -name?
     if [ -n "$tfe_name" ]; then
         # Separate the org and workspace in name
