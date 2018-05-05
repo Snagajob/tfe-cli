@@ -154,7 +154,7 @@ check_required () {
                 fi
             ;;
             tfe_workspace)
-                if [ -z "$tfe_org" ]; then
+                if [ -z "$tfe_workspace" ]; then
                     missing=1
                     echoerr 'TFE workspace required.'
                     echoerr 'Set with $TFE_WORKSPACE or use -name'
