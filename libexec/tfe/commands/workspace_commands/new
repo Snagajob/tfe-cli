@@ -149,7 +149,9 @@ tfe_new () (
     oauth_id=
 
     # Ensure all of tfe_org, etc, are set
-    check_required all
+    if ! check_required all; then
+        return 1
+    fi
 
     # Parse options
 
