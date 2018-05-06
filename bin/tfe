@@ -251,8 +251,8 @@ tfe_prefix=${tfe_prefix%/sbin}
 
 # Set some additional convenience variables
 tfe_lib_dir="$tfe_prefix/lib/tfe"
+tfe_cmd_dir="$tfe_lib_dir/commands"
 tfe_libexec_dir="$tfe_prefix/libexec/tfe"
-tfe_cmd_dir="$tfe_libexec_dir/commands"
 tfe_payload_dir="$tfe_prefix/share/tfe/commands"
 
 # Load required functions
