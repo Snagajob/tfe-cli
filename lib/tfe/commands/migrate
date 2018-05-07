@@ -151,9 +151,9 @@ tfe_migrate () (
                 set -e
                 echodebug "[DEBUG] Requesting OAuth tokens for $tfe_org"
 
+                echodebug "[DEBUG] OAuth list response:"
                 url="$tfe_address/api/v2/organizations/$tfe_org/oauth-tokens"
                 oauth_list_resp="$(tfe_api_call "$url")"
-                echodebug "[DEBUG] OAuth list response:"
                 echodebug "$oauth_list_resp"
 
                 oauth_ids="$(printf "%s" "$oauth_list_resp" | jq -r '.data[] | .id')"
@@ -182,17 +182,14 @@ tfe_migrate () (
     echodebug "[DEBUG] Migration payload:"
     echodebug "$(cat $payload)"
 
+    echodebug "[DEBUG] API request for legacy migration:"
     url="$tfe_address/api/v2/organizations/$tfe_org/workspaces"
-    migrate_resp="$(tfe_api_call -d @"$payload" "$url")"
-    if [ 0 -ne $? ]; then
+    if ! migrate_resp="$(tfe_api_call -d @"$payload" "$url")"; then
         echoerr "Error migrating legacy environment"
         return 1
     fi
 
     cleanup "$payload"
-
-    echodebug "[DEBUG] Legacy migration response:"
-    echodebug "$migrate_resp"
 
     echo "Migration complete: $legacy_name -> $tfe_org/$tfe_workspace"
 )

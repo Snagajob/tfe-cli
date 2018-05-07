@@ -205,12 +205,10 @@ tfe_new () (
         if [ -z "$oauth_id" ]; then
             oauth_id="$( (
                 set -e
-                echodebug "[DEBUG] Requesting OAuth tokens for $tfe_org"
+                echodebug "[DEBUG] API request for OAuth tokens for $tfe_org"
 
                 url="$tfe_address/api/v2/organizations/$tfe_org/oauth-tokens"
                 oauth_list_resp="$(tfe_api_call "$url")"
-                echodebug "[DEBUG] OAuth list response:"
-                echodebug "$oauth_list_resp"
 
                 oauth_ids="$(printf "%s" "$oauth_list_resp" | jq -r '.data[] | .id')"
                 echodebug "[DEBUG] OAuth IDs:"
@@ -248,14 +246,9 @@ tfe_new () (
     echodebug "[DEBUG] Migration payload:"
     echodebug "$(cat $payload)"
 
+    echodebug "[DEBUG] API request for new workspace:"
     url="$tfe_address/api/v2/organizations/$tfe_org/workspaces"
-    new_resp="$(tfe_api_call -d @"$payload" "$url")"
-    err=$?
-
-    echodebug "[DEBUG] New workspace response:"
-    echodebug "$new_resp"
-
-    if [ 0 -ne $err ]; then
+    if ! new_resp="$(tfe_api_call -d @"$payload" "$url")"; then
         echoerr "Error creating workspace $tfe_org/$tfe_workspace"
         return 1
     fi

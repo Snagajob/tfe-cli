@@ -57,14 +57,9 @@ tfe_list () (
         return 1
     fi
 
+    echodebug "[DEBUG] API request to list workspaces:"
     url="$tfe_address/api/v2/organizations/$tfe_org/workspaces"
-    list_resp="$(tfe_api_call "$url")"
-    err=$?
-
-    echodebug "[DEBUG] list workspace response:"
-    echodebug "$list_resp"
-
-    if [ 0 -ne $err ]; then
+    if ! list_resp="$(tfe_api_call "$url")"; then
         echoerr "Error listing workspaces for $tfe_org"
         return 1
     fi
