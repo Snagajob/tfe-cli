@@ -1,0 +1,36 @@
+#!/bin/sh
+
+. ./utils
+
+if [ -z "$TFE_ORG" ]; then
+    echoerr "TFE_ORG must be set to run tests"
+    exit 1
+else
+    export TFE_ORG="$TFE_ORG"
+fi
+
+tfe_dir="$(cd ../../../bin && pwd -P)"
+export PATH="$tfe_dir:$PATH"
+
+shells="bash dash ksh zsh mksh yash pdksh heirloom-sh busybox ash"
+# might want to test with /bin/sh if your /bin/sh is not named anything else
+# posh seems broken for sourcing files
+
+
+for shell in $shells; do
+    # Verify the shell is present
+    if [ -z "$(command -v $shell)" ]; then
+        echoerr "Skipping tests with $shell - not found"
+        continue
+    fi
+
+    echoerr "Testing with $shell"
+    tfe_tests="$(find . -type f ! -name 'testrunner' ! -name utils ! -path '*/.*')"
+    for tfe_test in $tfe_tests; do
+        if ! $shell $tfe_test; then
+            exit 1
+        fi
+    done
+    echoerr "Completed $shell tests"
+    echoerr
+done

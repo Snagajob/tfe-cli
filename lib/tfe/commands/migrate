@@ -115,9 +115,6 @@ tfe_migrate () (
 
     while [ -n "$1" ]; do
         case "$1" in
-            help|-h|-help|--help)
-                usage
-                ;;
             -legacy-name)
                 legacy_name=$(assign_arg "$1" "$2")
                 ;;
@@ -135,6 +132,9 @@ tfe_migrate () (
         [ -n "$1" ] && shift
         [ -n "$1" ] && shift
     done
+
+    # Check for required standard options
+    check_required all
 
     # Must have a legacy name
     if [ -z "$legacy_name" ]; then

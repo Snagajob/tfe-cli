@@ -270,13 +270,13 @@ tfe_pushvars () (
     defaulthclvars=
     defaulthclvars_values=
 
+    # Check for required standard options
+    check_required all
+
     # Parse options
 
     while [ -n "$1" ]; do
         case "$1" in
-            help|-h|-help|--help)
-                usage
-                ;;
             -dry-run)
                 case "$2" in
                     true)
