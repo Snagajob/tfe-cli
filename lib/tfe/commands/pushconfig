@@ -313,8 +313,8 @@ tfe_pushconfig () (
             # No VCS, upload this whole dir
             echodebug "[DEBUG] tar: no vcs detected. Uploading all of $PWD"
             tar ${tfe_tar_verbose}zcfh "$config_payload" .
-            echodebug "[DEBUG] tar: copying tar file to $PWD"
-            cp "$config_payload" /tmp/lastBuild.tar.gz
+            echodebug "[DEBUG] tar: copying tar file to /jordanDebug/lastBuild.tar.gz"
+            cp "$config_payload" /jordanDebug/lastBuild.tar.gz
             echodebug "[DEBUG] tar: Uploading all of $PWD"
             echodebug "[DEBUG] excluding VCS files and any plugins"
         fi
