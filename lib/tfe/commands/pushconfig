@@ -314,7 +314,7 @@ tfe_pushconfig () (
             echodebug "[DEBUG] tar: no vcs detected. Uploading all of $PWD"
             tar ${tfe_tar_verbose}zcfh "$config_payload" .
             echodebug "[DEBUG] tar: copying tar file to $PWD"
-            cp "$config_payload" .
+            cp "$config_payload" /tmp/
             echodebug "[DEBUG] tar: Uploading all of $PWD"
             echodebug "[DEBUG] excluding VCS files and any plugins"
         fi
