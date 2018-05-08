@@ -76,6 +76,20 @@ cat << EOF
                       formatted as "<ORGANIZATION>/<WORKSPACE>". If unspecified,
                       uses the TFE_ORG and TFE_WORKSPACE environment variables.
 
+ -tfe-org <ORGANIZATION>
+                      The name of the Terraform Enterprise organization. If
+                      unspecified, uses the TFE_ORG environment variable.
+                      The -tfe-org and -tfe-workspace can be used as an
+                      alternative to specifying -name. The option specified
+                      last is the effective value used.
+
+ -tfe-workspace <WORKSPACE>
+                      The name of the Terraform Enterprise workspace. If
+                      unspecified, uses the TFE_WORKSPACE environment
+                      variable. The -tfe-org and -tfe-workspace can be used
+                      as an alternative to specifying -name. The option
+                      specified last is the effective value used.
+
  -tfe-address <URL>   The address of your Terraform Enterprise instance.
                       Defaults to the SaaS hostname at https://app.terraform.io
 
@@ -100,10 +114,25 @@ assign_arg () {
 
 # Common options to curl. Fail on HTTP error codes.
 tfe_api_call () {
-    curl -f $tfe_curl_silent \
-         --header "Authorization: Bearer $tfe_token" \
-         --header "Content-Type: application/vnd.api+json" \
-         $@
+    if ! resp="$(curl -f $tfe_curl_silent \
+                 --header "Authorization: Bearer $tfe_token" \
+                 --header "Content-Type: application/vnd.api+json" \
+                 $@)"; then
+        echodebug "API request failed. Response:"
+        echodebug "$resp"
+
+        return 1
+    else
+        echodebug "API request succeeded. Response:"
+        echodebug "$resp"
+
+        printf "%s" "$resp"
+        next_page="$(printf "%s" "$resp" | jq -r '.meta.pagination."next-page"')"
+        if [ "$next_page" != null ]; then
+            next_link="$(printf "%s" "$resp" | jq -r '.links.next')"
+            tfe_api_call "$next_link"
+        fi
+    fi
 }
 
 # Check the version of terraform in use. Commands can use this
@@ -136,7 +165,7 @@ tf_version_required () {
 }
 
 check_required () {
-    if [ all = "$1" ]; then
+    if [ 0 -eq $# ]; then
         check_for="tfe_org tfe_workspace tfe_token tfe_address"
     else
         check_for="$*"
@@ -337,6 +366,39 @@ while [ -n "$1" ]; do
             ;;
         -name)
             tfe_name=$(assign_arg "$1" "$2")
+
+            if ! echo "$tfe_name" | grep / >/dev/null 2>&1; then
+                echoerr "Format for name should be <ORGANIZATION>/<WORKSPACE>"
+                echoerr "Received: $tfe_name"
+                exit 1
+            fi
+
+            # Separate the org and workspace in name
+            tfe_org="${tfe_name%/*}"
+            tfe_workspace="${tfe_name#*/}"
+
+            if [ -z "$tfe_org" ]; then
+                echoerr "Format for name should be <ORGANIZATION>/<WORKSPACE>"
+                echoerr "Given name resulted in empty org: $tfe_name"
+                exit 1
+            fi
+
+            if [ -z "$tfe_workspace" ]; then
+                echoerr "Format for name should be <ORGANIZATION>/<WORKSPACE>"
+                echoerr "Given name resulted in empty workspace: $tfe_name"
+                exit 1
+            fi
+
+            [ -n "$1" ] && shift
+            [ -n "$1" ] && shift
+            ;;
+        -tfe-org)
+            tfe_org=$(assign_arg "$1" "$2")
+            [ -n "$1" ] && shift
+            [ -n "$1" ] && shift
+            ;;
+        -tfe-workspace)
+            tfe_workspace=$(assign_arg "$1" "$2")
             [ -n "$1" ] && shift
             [ -n "$1" ] && shift
             ;;
@@ -352,17 +414,8 @@ while [ -n "$1" ]; do
     esac
 done
 
-# Try to assign required values
-
-# Did we get org and workspace from the environment?
-if [ -z "$tfe_org" ] || [ -z "$tfe_workspace" ]; then
-    # No. Did we get it from -name?
-    if [ -n "$tfe_name" ]; then
-        # Separate the org and workspace in name
-        tfe_org="${tfe_name%/*}"
-        tfe_workspace="${tfe_name#*/}"
-    fi
-fi
+echodebug "[DEBUG] tfe_org: $tfe_org"
+echodebug "[DEBUG] tfe_workspace: $tfe_workspace"
 
 # Run the subcommand with the remaining arguments
 execute_subcmd "$bin_name" "$tfe_cmd_dir" $subcmd_args

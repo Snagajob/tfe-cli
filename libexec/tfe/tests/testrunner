@@ -25,7 +25,7 @@ for shell in $shells; do
     fi
 
     echoerr "Testing with $shell"
-    tfe_tests="$(find . -type f ! -name 'testrunner' ! -name utils ! -path '*/.*')"
+    tfe_tests="$(find . -type f ! -name 'testrunner' ! -name utils ! -path '*/.*' | sort)"
     for tfe_test in $tfe_tests; do
         if ! $shell $tfe_test; then
             exit 1

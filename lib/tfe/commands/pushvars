@@ -197,15 +197,12 @@ process_vars () {
                     continue
                 fi
 
-                var_create_resp="$(tfe_api_call -d @"$payload" "$url")"
-                if [ 0 -ne $? ]; then
+                echodebug "[DEBUG] API request for variable create:"
+                if ! var_create_resp="$(tfe_api_call -d @"$payload" "$url")"; then
                     echoerr "Error creating variable $v"
                 fi
 
                 cleanup "$payload"
-
-                echodebug "[DEBUG] Variable create response:"
-                echodebug "$var_create_resp"
             fi
         else
             # This existing variable should only be overwritten if it was
@@ -228,15 +225,12 @@ process_vars () {
                         continue
                     fi
 
-                    var_update_resp="$(tfe_api_call --request PATCH -d @"$payload" "$url")"
-                    if [ 0 -ne $? ]; then
+                    echodebug "[DEBUG] API request for variable update:"
+                    if ! var_update_resp="$(tfe_api_call --request PATCH -d @"$payload" "$url")"; then
                         echoerr "Error updating variable $v"
                     fi
 
                     cleanup "$payload"
-
-                    echodebug "[DEBUG] Variable update response:"
-                    echodebug "$var_update_resp"
                 fi
             fi
         fi
@@ -382,14 +376,11 @@ tfe_pushvars () (
     echodebug "[DEBUG] API list variables URL:"
     echodebug "$url"
 
-    var_get_resp="$(tfe_api_call $url)"
-    if [ 0 -ne $? ]; then
+    echodebug "[DEBUG] API request for variable list:"
+    if ! var_get_resp="$(tfe_api_call $url)"; then
         echoerr "Error listing variables"
         return 1
     fi
-
-    echodebug "[DEBUG] Variable list response:"
-    echodebug "$var_get_resp"
 
     # If a config directory was given, then variables with defaults in
     # the configuration need to be discovered.
