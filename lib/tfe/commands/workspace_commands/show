@@ -20,18 +20,18 @@
 ##
 ## -------------------------------------------------------------------
 
-tfe_delete_description () (
-    echo "Delete a Terraform Enterprise workspace"
+tfe_show_description () (
+    echo "Show Terraform Enterprise workspace details"
 )
 
-tfe_delete_help () (
+tfe_show_help () (
 # Be sure to include the common options with tfe_usage_args
 cat << EOF
 SYNOPSIS
- tfe workspace delete -name <ORGANIZATION>/<WORKSPACE> [OPTIONS]
+ tfe workspace show -name <ORGANIZATION>/<WORKSPACE> [OPTIONS]
 
 DESCRIPTION
- Delete a Terraform Enterprise workspace
+ Show Terraform Enterprise workspace details.
 
 OPTIONS
 $(tfe_usage_args)
@@ -42,18 +42,25 @@ NOTES
 EOF
 )
 
-tfe_delete () (
-    # Ensure all of tfe_org, etc, are set.
-    if ! check_required; then
+tfe_show () (
+    # Ensure all of tfe_org, etc, are set. Workspace is not required.
+    if ! check_required tfe_org tfe_token tfe_address; then
         return 1
     fi
 
-    echodebug "[DEBUG] API request to delete workspace:"
+    echodebug "[DEBUG] API request to show workspace:"
     url="$tfe_address/api/v2/organizations/$tfe_org/workspaces/$tfe_workspace"
-    if ! tfe_api_call -X DELETE "$url" >/dev/null; then
-        echoerr "Error deleting workspaces $tfe_org/$tfe_workspace"
+    if ! show_resp="$(tfe_api_call "$url")"; then
+        echoerr "Error showing workspace information for $tfe_workspace"
         return 1
     fi
 
-    echo "Deleted $tfe_org/$tfe_workspace"
+    printf "%s" "$show_resp" | jq -r '
+        "name              = " + .data.attributes.name,
+        "id                = " + .data.id,
+        "auto-apply        = " + (.data.attributes."auto-apply"|tostring),
+        "locked            = " + (.data.attributes.locked|tostring),
+        "created-at        = " + .data.attributes."created-at",
+        "working-directory = " + .data.attributes."working-directory",
+        "terraform-version = " + .data.attributes."terraform-version"'
 )

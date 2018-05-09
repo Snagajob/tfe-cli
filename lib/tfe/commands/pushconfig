@@ -186,7 +186,7 @@ tfe_pushconfig () (
         return 1
     fi
 
-    if tar --version | grep GNU; then
+    if tar --version | grep GNU >/dev/null 2>&1; then
         tarcmd=gnutar
     else
         tarcmd=bsdtar
@@ -203,11 +203,21 @@ tfe_pushconfig () (
     fi
 
     # Check for required standard options
-    check_required all
+    if ! check_required; then
+        return 1
+    fi
 
     # Parse options
 
     while [ -n "$1" ]; do
+        # If this is a common option it has already been parsed. Skip it and
+        # its value.
+        if is_common_opt "$1"; then
+            shift
+            shift
+            continue
+        fi
+
         case "$1" in
             -upload-modules)
                 case "$2" in
@@ -261,7 +271,7 @@ tfe_pushconfig () (
     done
 
     # Check for additional required commands.
-    if [ -z "$(command -v git)" ]; then
+    if [ "$vcs" = true ] && [ -z "$(command -v git)" ]; then
         echoerr "The git command is required for VCS detection"
         return 1
     fi
@@ -430,7 +440,7 @@ tfe_pushconfig () (
 
             echodebug "[DEBUG] API request to poll run:"
             url=$tfe_address/api/v2/workspaces/$workspace_id/runs
-            poll_run_resp=$(tfe_api_call $url)
+            poll_run_resp="$(tfe_api_call $url)"
 
             run_status="$(printf "%s" "$poll_run_resp" | jq -r '.data[] | select(.id == "'$run_id'") | .attributes.status')"
             [ 0 -ne $? ] && continue

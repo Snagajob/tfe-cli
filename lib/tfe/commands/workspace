@@ -42,5 +42,5 @@ EOF
 )
 
 tfe_workspace () (
-    execute_subcmd $bin_name "$cmd_dir/workspace_commands" $@
+    execute_subcmd $bin_name "$cmd_dir/workspace_commands" "$@"
 )

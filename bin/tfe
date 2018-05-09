@@ -43,8 +43,6 @@
 ## Utility function declarations
 ##
 
-
-
 # Return (print) $1\n$2 if $1 is not empty. Usage:
 #   my_str_list="$(append "$my_str_list" "line")"
 # This will facilitate a later iteration:
@@ -114,15 +112,10 @@ assign_arg () {
 
 # Common options to curl. Fail on HTTP error codes.
 tfe_api_call () {
-    if ! resp="$(curl -f $tfe_curl_silent \
+    if resp="$(curl -f $tfe_curl_silent \
                  --header "Authorization: Bearer $tfe_token" \
                  --header "Content-Type: application/vnd.api+json" \
                  $@)"; then
-        echodebug "API request failed. Response:"
-        echodebug "$resp"
-
-        return 1
-    else
         echodebug "API request succeeded. Response:"
         echodebug "$resp"
 
@@ -132,6 +125,11 @@ tfe_api_call () {
             next_link="$(printf "%s" "$resp" | jq -r '.links.next')"
             tfe_api_call "$next_link"
         fi
+    else
+        echodebug "API request failed. Response:"
+        echodebug "$resp"
+
+        return 1
     fi
 }
 
@@ -214,6 +212,14 @@ check_required () {
     return $missing
 }
 
+is_common_opt () {
+    for common_opt in -name -tfe-address -tfe-org -tfe-workspace -token; do
+        if [ "$1" = "$common_opt" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
 
 ##
 ## Program begins here
@@ -355,17 +361,25 @@ fi
 # Comb through options for name, token, and address while building
 # a list of other arguments to go to the subcommand
 
-subcmd_args=
+# The only "safe" operations to perform on the provided list of arguments in $@
+# is to iterate over them or remove args from the beginning using shift. All
+# other kinds of operations tend to strip away the proper quoting for arguments
+# provided with spaces, so we're unable to actually _remove_ the common options
+# from $@.
 
-while [ -n "$1" ]; do
-    case "$1" in
+# When a common option is found as an argument, the following argument in the
+# next iteration contains the value.
+
+assign=
+for arg in "$@"; do
+    case "$assign" in
         -tfe-address)
-            tfe_address=$(assign_arg "$1" "$2")
-            [ -n "$1" ] && shift
-            [ -n "$1" ] && shift
+            tfe_address="$arg"
+            assign=
+            continue
             ;;
         -name)
-            tfe_name=$(assign_arg "$1" "$2")
+            tfe_name="$arg"
 
             if ! echo "$tfe_name" | grep / >/dev/null 2>&1; then
                 echoerr "Format for name should be <ORGANIZATION>/<WORKSPACE>"
@@ -388,37 +402,43 @@ while [ -n "$1" ]; do
                 echoerr "Given name resulted in empty workspace: $tfe_name"
                 exit 1
             fi
-
-            [ -n "$1" ] && shift
-            [ -n "$1" ] && shift
+            assign=
+            continue
             ;;
         -tfe-org)
-            tfe_org=$(assign_arg "$1" "$2")
-            [ -n "$1" ] && shift
-            [ -n "$1" ] && shift
+            tfe_org="$arg"
+            assign=
+            continue
             ;;
         -tfe-workspace)
-            tfe_workspace=$(assign_arg "$1" "$2")
-            [ -n "$1" ] && shift
-            [ -n "$1" ] && shift
+            tfe_workspace="$arg"
+            assign=
+            continue
             ;;
         -token)
-            tfe_token=$(assign_arg "$1" "$2")
-            [ -n "$1" ] && shift
-            [ -n "$1" ] && shift
-            ;;
-        *)
-            subcmd_args="$subcmd_args $1"
-            [ -n "$1" ] && shift
+            tfe_token="$arg"
+            assign=
+            continue
             ;;
     esac
+
+    if is_common_opt "$arg"; then
+        assign="$arg"
+    fi
 done
 
+echodebug "[DEBUG] tfe_address: $tfe_address"
 echodebug "[DEBUG] tfe_org: $tfe_org"
 echodebug "[DEBUG] tfe_workspace: $tfe_workspace"
 
-# Run the subcommand with the remaining arguments
-execute_subcmd "$bin_name" "$tfe_cmd_dir" $subcmd_args
+if [ -n "$tfe_token" ]; then
+    echodebug "[DEBUG] tfe_token: (not empty)"
+else
+    echodebug "[DEBUG] tfe_token: (empty)"
+fi
+
+# Run the subcommand
+execute_subcmd "$bin_name" "$tfe_cmd_dir" "$@"
 
 # Exit with the exit code returned by the command
 exit $?

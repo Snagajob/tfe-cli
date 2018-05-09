@@ -114,6 +114,14 @@ tfe_migrate () (
     # Parse options
 
     while [ -n "$1" ]; do
+        # If this is a common option it has already been parsed. Skip it and
+        # its value.
+        if is_common_opt "$1"; then
+            shift
+            shift
+            continue
+        fi
+
         case "$1" in
             -legacy-name)
                 legacy_name=$(assign_arg "$1" "$2")
@@ -134,7 +142,9 @@ tfe_migrate () (
     done
 
     # Check for required standard options
-    check_required all
+    if ! check_required; then
+        return 1
+    fi
 
     # Must have a legacy name
     if [ -z "$legacy_name" ]; then
