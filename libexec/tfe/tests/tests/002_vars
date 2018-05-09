@@ -1,0 +1,45 @@
+#!/bin/sh
+
+. ./utils
+
+# Workspace creation and deletion are confirmed to work by now.
+# Create a workspace to use for these tests.
+ws_name="tfe-test-workspace-$(random_enough)"
+tfe workspace new -name "$TFE_ORG/$ws_name" >/dev/null 2>&1
+
+# After initial creation there should be no tf variables
+output="$(tfe pullvars -name "$TFE_ORG/$ws_name" 2>&1)"
+assert_equal "tfe_pullvars_empty_ret_0" 0 $?
+assert_equal "tfe_pullvars_empty" "" "$output"
+
+# After initial creation there should be no env variables
+output="$(tfe pullvars -name "$TFE_ORG/$ws_name" -env true 2>&1)"
+assert_equal "tfe_pullvars_empty_env_ret_0" 0 $?
+assert_equal "tfe_pullvars_empty_env" "" "$output"
+
+# Pushing up a tf variable should succeed
+output="$(tfe pushvars -name "$TFE_ORG/$ws_name" -var 'var=foo' 2>&1)"
+assert_equal "tfe_pushvars_var_ret_0" 0 $?
+
+# Pushing up a sensitive tf variable should succeed
+output="$(tfe pushvars -name "$TFE_ORG/$ws_name" -svar 'svar=bar' 2>&1)"
+assert_equal "tfe_pushvars_svar_ret_0" 0 $?
+
+# Pushing up an hcl tf variable should succeed
+output="$(tfe pushvars -name "$TFE_ORG/$ws_name" -hcl-var 'hvar=["one", "two"]' 2>&1)"
+assert_equal "tfe_pushvars_hvar_ret_0" 0 $?
+
+# Pushing up a sensitive hcl variable should succeed
+output="$(tfe pushvars -name "$TFE_ORG/$ws_name" -shcl-var 'shvar={one="one", two="two"}' 2>&1)"
+assert_equal "tfe_pushvars_shvar_ret_0" 0 $?
+
+# Pushing up an environment variable should succeed
+output="$(tfe pushvars -name "$TFE_ORG/$ws_name" -env-var 'evar=baz' 2>&1)"
+assert_equal "tfe_pushvars_evar_ret_0" 0 $?
+
+# Pushing up a sensitive environment variable should succeed
+output="$(tfe pushvars -name "$TFE_ORG/$ws_name" -var 'sevar=qux' 2>&1)"
+assert_equal "tfe_pushvars_sevar_ret_0" 0 $?
+
+tfe workspace delete -name "$TFE_ORG/$ws_name" >/dev/null 2>&1
+
