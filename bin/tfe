@@ -119,6 +119,7 @@ tfe_api_call () {
         echodebug "API request succeeded. Response:"
         echodebug "$resp"
 
+        printf "%s" "$resp"
         next_page="$(printf "%s" "$resp" | jq -r '.meta.pagination."next-page"')"
         if [ "$next_page" != null ]; then
             next_link="$(printf "%s" "$resp" | jq -r '.links.next')"

@@ -50,7 +50,7 @@ tfe_delete () (
 
     echodebug "[DEBUG] API request to delete workspace:"
     url="$tfe_address/api/v2/organizations/$tfe_org/workspaces/$tfe_workspace"
-    if ! tfe_api_call -X DELETE "$url"; then
+    if ! tfe_api_call -X DELETE "$url" >/dev/null; then
         echoerr "Error deleting workspaces $tfe_org/$tfe_workspace"
         return 1
     fi

@@ -433,7 +433,7 @@ tfe_pushconfig () (
 
             echodebug "[DEBUG] API request to poll run:"
             url=$tfe_address/api/v2/workspaces/$workspace_id/runs
-            poll_run_resp=$(tfe_api_call $url)
+            poll_run_resp="$(tfe_api_call $url)"
 
             run_status="$(printf "%s" "$poll_run_resp" | jq -r '.data[] | select(.id == "'$run_id'") | .attributes.status')"
             [ 0 -ne $? ] && continue
