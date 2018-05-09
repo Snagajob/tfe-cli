@@ -667,10 +667,10 @@ tfe_pushvars () (
             }' "$(basename "$var_file")")"
 
             echodebug "[DEBUG] Temporary directory contents:"
-            echodebug "$(ls "$tfvar_dir")"
+            echodebug "$(ls)"
 
             echodebug "[DEBUG] Temporary file contents:"
-            echodebug "$(cat "$tfvar_dir"/*)"
+            echodebug "$(cat *)"
     fi
 
     echodebug "[DEBUG] All variables:"
