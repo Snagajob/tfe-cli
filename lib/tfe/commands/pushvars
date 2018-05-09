@@ -43,33 +43,33 @@ DESCRIPTION
 OPTIONS
 $(tfe_usage_args)
 
-  -dry-run <BOOLEAN>   Show what would be done without changing any variables
-                       in the workspace. Defaults to false.
+ -dry-run <BOOLEAN>   Show what would be done without changing any variables
+                      in the workspace. Defaults to false.
 
-  -var 'name=val'      Set a Terraform variable with a basic string value.
+ -var 'name=val'      Set a Terraform variable with a basic string value.
 
-  -svar 'name=val'     Set a sensitive Terraform variable with a basic string
-                       value.
+ -svar 'name=val'     Set a sensitive Terraform variable with a basic string
+                      value.
 
-  -hcl-var 'name=val'  Set a Terraform variable with an HCL value.
+ -hcl-var 'name=val'  Set a Terraform variable with an HCL value.
 
-  -shcl-var 'name=val' Set a sensitive Terraform variable with an HCL value.
+ -shcl-var 'name=val' Set a sensitive Terraform variable with an HCL value.
 
-  -env-var 'name=val'  Set an environment variable.
+ -env-var 'name=val'  Set an environment variable.
 
-  -senv-var 'name=val' Set a sensitive environment variable.
+ -senv-var 'name=val' Set a sensitive environment variable.
 
-  -var-file <FILE>     Load Terraform variables from a tfvars file. Files can
-                       only set non-sensitive variables.
+ -var-file <FILE>     Load Terraform variables from a tfvars file. Files can
+                      only set non-sensitive variables.
 
-  -overwrite <NAME>    Overwrite an existing value if the <NAME> variable is
-                       already set in Terraform Enterprise. You must enable this
-                       for every variable you want to overwrite. Can be
-                       set multiple times.
+ -overwrite <NAME>    Overwrite an existing value if the <NAME> variable is
+                      already set in Terraform Enterprise. You must enable this
+                      for every variable you want to overwrite. Can be
+                      set multiple times.
 
- -hide-sensitive <BOOLEAN>
-                       Whether to hide sensitive values in output. Defaults to
-                       true.
+-hide-sensitive <BOOLEAN>
+                      Whether to hide sensitive values in output. Defaults to
+                      true.
 NOTES
  All -var style args (except -var-file) can be set multiple times to operate
  on multiple variables with one command.
