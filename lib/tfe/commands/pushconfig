@@ -271,7 +271,7 @@ tfe_pushconfig () (
     done
 
     # Check for additional required commands.
-    if [ -z "$(command -v git)" ]; then
+    if [ "$vcs" = true ] && [ -z "$(command -v git)" ]; then
         echoerr "The git command is required for VCS detection"
         return 1
     fi
