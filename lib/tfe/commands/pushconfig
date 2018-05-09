@@ -186,7 +186,7 @@ tfe_pushconfig () (
         return 1
     fi
 
-    if tar --version | grep GNU; then
+    if tar --version | grep GNU >/dev/null 2>&1; then
         tarcmd=gnutar
     else
         tarcmd=bsdtar
