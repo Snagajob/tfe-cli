@@ -12,9 +12,14 @@ fi
 tfe_dir="$(cd ../../../bin && pwd -P)"
 export PATH="$tfe_dir:$PATH"
 
-shells="bash dash ksh zsh mksh yash pdksh heirloom-sh busybox ash"
-# might want to test with /bin/sh if your /bin/sh is not named anything else
-# posh seems broken for sourcing files
+if [ -n "$TFE_TEST_ALL" ]; then
+    # might want to test with /bin/sh also if your /bin/sh is not named
+    # anything else.
+    # posh seems broken for sourcing files.
+    shells="bash dash ksh zsh mksh yash pdksh heirloom-sh busybox ash"
+else
+    shells="/bin/sh"
+fi
 
 
 for shell in $shells; do

@@ -113,5 +113,5 @@ execute_subcmd () {
     # sourced function
     echodebug "[DEBUG] Loading command from $cmd_dir/$cmd"
     . "$cmd_dir/$cmd"
-    ${cmd_prefix}_${cmd} $@
+    ${cmd_prefix}_${cmd} "$@"
 }

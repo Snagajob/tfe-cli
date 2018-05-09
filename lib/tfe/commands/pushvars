@@ -270,6 +270,14 @@ tfe_pushvars () (
     # Parse options
 
     while [ -n "$1" ]; do
+        # If this is a common option it has already been parsed. Skip it and
+        # its value.
+        if is_common_opt "$1"; then
+            shift
+            shift
+            continue
+        fi
+
         case "$1" in
             -dry-run)
                 case "$2" in
