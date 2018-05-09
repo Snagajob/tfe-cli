@@ -203,7 +203,9 @@ tfe_pushconfig () (
     fi
 
     # Check for required standard options
-    check_required all
+    if ! check_required; then
+        return 1
+    fi
 
     # Parse options
 

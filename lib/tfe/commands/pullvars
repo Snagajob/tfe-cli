@@ -74,7 +74,9 @@ tfe_pullvars () (
     env=false
 
     # Check for required standard options
-    check_required all
+    if ! check_required; then
+        return 1
+    fi
 
     # Parse options
 

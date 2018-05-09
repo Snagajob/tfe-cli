@@ -142,7 +142,9 @@ tfe_migrate () (
     done
 
     # Check for required standard options
-    check_required all
+    if ! check_required; then
+        return 1
+    fi
 
     # Must have a legacy name
     if [ -z "$legacy_name" ]; then
