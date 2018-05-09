@@ -265,7 +265,7 @@ tfe_pushvars () (
     defaulthclvars_values=
 
     # Check for required standard options
-    check_required all
+    check_required
 
     # Parse options
 
