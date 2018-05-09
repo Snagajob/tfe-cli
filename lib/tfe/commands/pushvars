@@ -67,7 +67,7 @@ $(tfe_usage_args)
                       for every variable you want to overwrite. Can be
                       set multiple times.
 
--hide-sensitive <BOOLEAN>
+ -hide-sensitive <BOOLEAN>
                       Whether to hide sensitive values in output. Defaults to
                       true.
 NOTES
