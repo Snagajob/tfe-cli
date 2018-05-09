@@ -51,3 +51,14 @@ assert_contains () {
         "$(printf "term '%s' not found in:\n\n%s\n" "$2" "$3")"
 }
 
+# Ensure a given text is not present in a term
+# $1 test name
+# $2 search term
+# $3 text to search
+assert_contains_not () {
+    ! echo "$3" | grep "$2" 2>&1 >/dev/null
+    _handle_test \
+        $1 \
+        $? \
+        "$(printf "term '%s' was found in:\n\n%s\n" "$2" "$3")"
+}
