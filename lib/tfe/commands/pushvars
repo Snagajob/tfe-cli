@@ -665,6 +665,12 @@ tfe_pushvars () (
                     in_value = 0
                 }
             }' "$(basename "$var_file")")"
+
+            echodebug "[DEBUG] Temporary directory contents:"
+            echodebug "$(ls)"
+
+            echodebug "[DEBUG] Temporary file contents:"
+            echodebug "$(cat *)"
     fi
 
     echodebug "[DEBUG] All variables:"
@@ -680,7 +686,7 @@ tfe_pushvars () (
             if [ -z "$var_file_arg" ]; then
                 val_lines="$(echo "var.$var" | terraform console 2>/dev/null)"
             else
-                val_lines="$(echo "var.$var" | terraform console $var_file_arg 2>/dev/null)"
+                val_lines="$(echo "var.$var" | terraform console "$var_file_arg" 2>/dev/null)"
             fi
 
             if [ 0 -ne $? ]; then
