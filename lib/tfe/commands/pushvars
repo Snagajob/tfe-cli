@@ -684,13 +684,15 @@ tfe_pushvars () (
     if [ -n "$all_vars" ]; then
         for var in $all_vars; do
             if [ -z "$var_file_arg" ]; then
-                val_lines="$(echo "var.$var" | terraform console 2>/dev/null)"
+                val_lines="$(echo "var.$var" | terraform console 2>&3)"
             else
-                val_lines="$(echo "var.$var" | terraform console "$var_file_arg" 2>/dev/null)"
+                val_lines="$(echo "var.$var" | terraform sconsole "$var_file_arg" 2>&3)"
             fi
 
             if [ 0 -ne $? ]; then
                 echodebug "Unable to retrieve value for potential variable $var"
+                echodebug "Stdout of terraform console was:"
+                echodebug "$val_lines"
                 continue
             fi
             val="$(escape_value "$val_lines")"
